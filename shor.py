@@ -9,11 +9,12 @@ Created on Thu Jun  7 14:47:52 2018
 """
 Code to run shor's algorithm.  Uses Rigetti forest API to simulate the quantum
 operations (QFT for example).
+
+This attempts to follow the circuit laid out in https://arxiv.org/pdf/quant-ph/0205095.pdf
 """
 
 import pyquil.quil as pq
 from pyquil.gates import H
-import math
 import fourier
 import numpy as np
 
@@ -28,8 +29,8 @@ def factor():
         s += 1
     q = 2**s #n^2 <= q <= 2n^2, and q = 2^s (in this case, s=4)
              #this is the number of qubits in the first/second registers
-    r1 = [i for i in range(q)] #first register
-    r2 = [i + q for i in range(q)] #second register
+    r1 = [i for i in range(2*q)] #first register
+    r2 = [i + len(r1) for i in range(q)] #second register
 
     circuit = pq.Program()
     #step 1: initialize first register
@@ -56,6 +57,19 @@ def initialization(r1, r2):
 def computation(r1, r2):
     """computes the modular exponentiation from the first register onto the second register"""
     return
+
+def q_add(a, r2):
+    """The quantum addition takes as input a number a, and n  qubits containing
+    the quantum Fourier transform of an other number b.
+    After, r2 contains the quantum
+    Fourier transform of (a + b)mod 2n"""
+    A_i = np.array([[1, 0],
+                    [0, np.exp(2*np.pi*(a>>a.bit_length))]])
+    p = pq.Program().defgate("A_i", A_i)
+    p.inst([("A_i", qubit) for qubit in r2])
+    
+    return p
+    
     
 def measurement(r1, r2):
     """observes register 1 to collapse the superposition into periodic form"""
